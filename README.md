@@ -1,4 +1,4 @@
-## Ulyssses_snapshot
+## Ulyssses Snapshot
 
 Developed by RoyRogers56.
 
