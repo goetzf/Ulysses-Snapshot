@@ -13,7 +13,7 @@ If complete library restoration is needed, rely on Ulysses own built-in backup i
 
 ## Complete markdown export: 
 * Converts all Ulysses Sheets to Markdown files, in a similar named folder structure as above. 
-* All special MarkdownXL tags and attachmets are included in HTML `<span>`-tags and `<!-- HTML comment blocks -->`
+* All special MarkdownXL tags and attachmets, not native to basic Markdown, are preserved by converting them to HTML `<span>`-tags and `<!-- HTML comment blocks -->`
 * Original sheet's modified dates are also preserved.
 * Embedded images are included in "/Media/" folder
 * Conversion from Ulysses' xml sheet format to Markdown, is done by OSX xslt process. 
