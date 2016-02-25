@@ -3,10 +3,13 @@
 
 * This Python script takes a snapshot of all Ulysses III Sheets, 
 * to a readable folder structure, named with Group and Sheet titles. 
-* Groups and Sheets are prefixed with sequence numbers. Original sheet's modified dates are also preserved. 
+* Groups and Sheets are prefixed with sequence numbers. 
+* Original sheet's modified dates are also preserved. 
 * Complete markdown files get also embedded in all .ulysses packages.
-* Individual Sheets or Groups can be restored by dragging them to Ulysses via Finder. 
-* Filters, glued sheets, and original modified time, will not be preserved when restoring from Arcive. (If complete library restoration is needed, rely on Ulysses own built-in backup instead. Filters, glued sheets, and original modified time, will then also be restored.)
+* Individual Sheets or Groups can be restored by dragging them to Ulysses' sidebar via Finder. 
+
+Note: Filters, glued sheets, and original creation time, will not be preserved when restoring from Arcive.    
+If complete library restoration is needed, rely on Ulysses own built-in backup instead. Filters, glued sheets, and original creation time, will then also be restored.
 
 ## Also: 
 * Convert all Ulysses Sheets to Markdown files, 
