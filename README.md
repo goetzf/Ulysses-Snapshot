@@ -1,22 +1,24 @@
-# Split Markdown for Ulysses import
 
-Split Markdown file into smaller sections based on h1 h2 headings.   
-Then drag folder structure to Ulysses III
+# Ulysses Snapshot – ul_snapshot.py
 
-**split\_md\_05.py**
+* This Python script takes a snapshot of all Ulysses III Sheets, 
+* to a readable folder structure, named with Group and Sheet titles. 
+* Groups and Sheets are prefixed with sequence numbers. Original sheet's modified dates are also preserved. 
+* Complete markdown files get also embedded in all .ulysses packages.
+* Individual Sheets or Groups can be restored by dragging them to Ulysses via Finder. 
+* Filters, glued sheets, and original modified time, will not be preserved when restoring from Arcive. (If complete library restoration is needed, rely on Ulysses own built-in backup instead. Filters, glued sheets, and original modified time, will then also be restored.)
 
-2014-05-06 18:15 
+## Also: 
+* Convert all Ulysses Sheets to Markdown files, 
+* with all special MarkdownXL tags and attachmets included in HTML tags and in HTML comment blocks: `<!-- Comment --\>`
+* Original sheet's modified dates are also preserved.
+* Embedded images are included in "/Media/" folder
 
-Python Script for Splitting Markdown files into smaller files and folders
-based on header levels:  
-  # Header 1 becomes numbered sub folders (groups),   
-  ## Header 2 becomes numbered markdown files (sheets).
+# Look for changes and Sync – ul_sync_md.py
 
-Main folder can then be draged into Ulysses archive, either "iCloud" or "On My Mac")
-
-Handy when importing big projects from other Markdown sources.
-
-Also generates combined .marked file to be opened in Marked 2.1
-
-_2014 (cl) RoyRogers56_
+1. First checking for Changes in Markdown files (exported from Ulysses) 
+2. copying any changed files to Markdorn_sync_Inbox (folder in External sources in Ulysses)
+3. Then checking for changes in Ulysses sheets and groups,
+4. and exporting Markdown from Ulysses if any changes.
+5. Uses rsync for copying, so only markdown files of changed sheets will be updated.
 
