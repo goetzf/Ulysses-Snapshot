@@ -51,12 +51,17 @@ do_embed_markdown = True
 HOME = os.getenv("HOME", "") + "/"
 time_stamp = "_" + datetime.datetime.now().strftime("%Y-%m-%d_%H%M")
 
+# Note!!! DO NOT LEAVE ANY OF THE PATH NAMES BELOW EMPTY OR TO ROOT OF EXISTING FOLDERS!!!
+# Note!!! YOU MAY THEN DELETE ALL YOUR USER FILES !!!
+
 # Path for Ulysses Archive (Snapshots):
 archive_ul_path = HOME + "Archive_Ulysses/UL_Archive" + time_stamp
 # Path for Ulysses Markdown Archive:
 archive_markdown_path = HOME + "Archive_Ulysses/UL_Markdown"  # + time_stamp
 
 archive_ul_temp = HOME + "Archive_Ulysses/Temp_UL_Archive"
+
+# Note!!! Do not change last part of folder name: "Temp_UL_Markdown"!!!
 markdown_ul_temp = HOME + "Archive_Ulysses/Temp_UL_Markdown"
 
 
@@ -299,6 +304,7 @@ def make_markdown(ul_archive_path, md_path):
         # *** shutil.rmtree() may delete all user files or your complete Hard Drive!!
         shutil.rmtree(markdown_ul_temp)
         # *** NOTE: USE rmtree() WITH EXTREME CAUTION!
+
     os.makedirs(markdown_ul_temp)
     subprocess.call(['rsync', '-r', '-t', '--include=*.md', '--exclude=*.*',
                      '--exclude=*-ulfilter/', '--remove-source-files',

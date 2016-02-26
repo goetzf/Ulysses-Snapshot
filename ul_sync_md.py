@@ -19,9 +19,13 @@ import subprocess
 
 HOME = os.getenv("HOME", "") + "/"
 
+# Note!!! DO NOT LEAVE ANY OF THE PATH NAMES BELOW EMPTY OR TO ROOT OF EXISTING FOLDERS!!!
+# Note!!! YOU MAY THEN DELETE ALL YOUR USER FILES !!!
+
 # md_icloud_path = HOME + "OneDrive/UL iCloud Markdown"
 # sync_inbox_path = HOME + "OneDrive/md_sync_inbox"
 sync_inbox_path = HOME + "Dropbox/My Notes/md_sync_inbox"
+
 md_icloud_path = HOME + "Dropbox/My Notes/UL iCloud Markdown"
 md_mac_path = HOME + "Dropbox/My Notes/UL Mac Markdown"
 
