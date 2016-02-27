@@ -115,32 +115,26 @@ def make_ul_archive(ul_library_path, archive_path):
     include_make_markdown_script(archive_path)
 
 
-def read_file(file_name):
-    f = open(file_name, "r", encoding='utf-8')
-    file_content = f.read()
-    f.close()
-    return file_content
+def process_ul_sheets_and_groups(path):
+    for root, dirnames, filenames in os.walk(path, topdown=False):
+        # Processing Sheets
+        num = 1
+        for dirname in fnmatch.filter(dirnames, '*.ulysses'):
+            new_title = rename_sheet(root, dirname, num)
+            if new_title != "":
+                num += 1
 
-
-def write_file(filename, file_content):
-    f = open(filename, "w", encoding='utf-8')
-    f.write(file_content)
-    f.close()
-
-
-def clean_title(title):
-    # Clean MD titel to make safe cross-platform filenames:
-    title = re.sub(r"[/\\—|.&<>:—–]", r"-", title)
-    title = re.sub(r"[\*]", r"_", title)
-
-    # Strip all special chars:
-    # title = re.sub(r"[^_0-9a-zA-Z \-]", r"", title)  # ASCII Only
-    title = re.sub(r"[#?*^!$+=%§'\[\]\{\}\"\t\n\r\f\v“”‘’´`¨]", r"", title)
-    title = title.replace(u"\u2028", "-")
-    title = title.strip()
-    if title == "":
-        title = "Untitled"
-    return title[:64]
+        # Processing Groups
+        for filename in fnmatch.filter(filenames, 'Info.ulgroup'):
+            info_file = os.path.join(root, filename)
+            pl = plistlib.readPlist(info_file)
+            if "childOrder" in pl:
+                num = 1
+                for pl_entry in pl["childOrder"]:
+                    if str(pl_entry).endswith("-ulgroup"):
+                        group_title = rename_group(root, pl_entry, num)
+                        if group_title != "":
+                            num += 1
 
 
 def rename_sheet(root, ul_name, num):
@@ -186,26 +180,32 @@ def rename_group(root, group, num):
     return group_title
 
 
-def process_ul_sheets_and_groups(path):
-    for root, dirnames, filenames in os.walk(path, topdown=False):
-        # Processing Sheets
-        num = 1
-        for dirname in fnmatch.filter(dirnames, '*.ulysses'):
-            new_title = rename_sheet(root, dirname, num)
-            if new_title != "":
-                num += 1
+def read_file(file_name):
+    f = open(file_name, "r", encoding='utf-8')
+    file_content = f.read()
+    f.close()
+    return file_content
 
-        # Processing Groups
-        for filename in fnmatch.filter(filenames, 'Info.ulgroup'):
-            info_file = os.path.join(root, filename)
-            pl = plistlib.readPlist(info_file)
-            if "childOrder" in pl:
-                num = 1
-                for pl_entry in pl["childOrder"]:
-                    if str(pl_entry).endswith("-ulgroup"):
-                        group_title = rename_group(root, pl_entry, num)
-                        if group_title != "":
-                            num += 1
+
+def write_file(filename, file_content):
+    f = open(filename, "w", encoding='utf-8')
+    f.write(file_content)
+    f.close()
+
+
+def clean_title(title):
+    # Clean MD titel to make safe cross-platform filenames:
+    title = re.sub(r"[/\\—|.&<>:—–]", r"-", title)
+    title = re.sub(r"[\*]", r"_", title)
+
+    # Strip all special chars:
+    # title = re.sub(r"[^_0-9a-zA-Z \-]", r"", title)  # ASCII Only
+    title = re.sub(r"[#?*^!$+=%§'\[\]\{\}\"\t\n\r\f\v“”‘’´`¨]", r"", title)
+    title = title.replace(u"\u2028", "-")
+    title = title.strip()
+    if title == "":
+        title = "Untitled"
+    return title[:64]
 
 
 def include_make_markdown_script(archive_path):
