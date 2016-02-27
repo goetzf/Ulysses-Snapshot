@@ -5,8 +5,8 @@
 # GNU (cl) 2016 @rovest, free to use and improve. Not for sale.
 # Only tested with python 3.3 on OS X 10.10
 
-# Update 2016-02-27: In def process_ul_sheets_and_groups(): Simplified processing of sheets
-# Update 2016-02-21: In def make_ul_archive():
+# Update 2016-02-27: process_ul_sheets_and_groups(): Fixed and simplified processing sheets
+# Update 2016-02-21: make_ul_archive():
 #                    Hard-coded access to Groups-ulgroup and Unfiled-ulgroup (Inbox) only.
 #                    Inbox and all top level groups will now be on same level.
 # Update 2015-07-03: 1. Added workaround for bug in Ulysses 2.1 restore backup function.
@@ -187,65 +187,25 @@ def rename_group(root, group, num):
 
 
 def process_ul_sheets_and_groups(path):
-    # Processing Groups
     for root, dirnames, filenames in os.walk(path, topdown=False):
-        for filename in fnmatch.filter(filenames, 'Info.ulgroup'):
-            info_file = os.path.join(root, filename)
-            pl = plistlib.readPlist(info_file)
-            ts = os.path.getmtime(info_file)
-
-            if "childOrder" in pl:
-                pl["namedChildOrder"] = []
-                num = 1
-                for pl_entry in pl["childOrder"]:
-                    if str(pl_entry).endswith("-ulgroup"):
-                        group_title = rename_group(root, pl_entry, num)
-                        if group_title != "":
-                            num += 1
-                            pl["namedChildOrder"].append(group_title)
-                plistlib.writePlist(pl, info_file)
-                os.utime(info_file, (-1, ts))
-
-    # Processing Sheets
-    for root, dirnames, filenames in os.walk(path, topdown=False):
+        # Processing Sheets
         num = 1
         for dirname in fnmatch.filter(dirnames, '*.ulysses'):
             new_title = rename_sheet(root, dirname, num)
             if new_title != "":
                 num += 1
 
-
-# def process_ul_sheets_and_groups(path):
-#     for root, dirnames, filenames in os.walk(path, topdown=False):
-#         for filename in fnmatch.filter(filenames, 'Info.ulgroup'):
-#             info_file = os.path.join(root, filename)
-#             pl = plistlib.readPlist(info_file)
-#             ts = os.path.getmtime(info_file)
-#             if "sheetClusters" in pl:
-#                 pl["namedSheetClusters"] = []
-#                 num = 1
-#                 index = 0
-#                 for pl_entry in pl["sheetClusters"]:
-#                     pl["namedSheetClusters"].append([])
-#                     for entry in pl_entry:
-#                         new_title = rename_sheet(root, entry, num)
-#                         if new_title != "":
-#                             num += 1
-#                             pl["namedSheetClusters"][index].append(new_title)
-#                     index += 1
-#                 plistlib.writePlist(pl, info_file)
-#                 os.utime(info_file, (-1, ts))
-#             if "childOrder" in pl:
-#                 pl["namedChildOrder"] = []
-#                 num = 1
-#                 for pl_entry in pl["childOrder"]:
-#                     if str(pl_entry).endswith("-ulgroup"):
-#                         group_title = rename_group(root, pl_entry, num)
-#                         if group_title != "":
-#                             num += 1
-#                             pl["namedChildOrder"].append(group_title)
-#                 plistlib.writePlist(pl, info_file)
-#                 os.utime(info_file, (-1, ts))
+        # Processing Groups
+        for filename in fnmatch.filter(filenames, 'Info.ulgroup'):
+            info_file = os.path.join(root, filename)
+            pl = plistlib.readPlist(info_file)
+            if "childOrder" in pl:
+                num = 1
+                for pl_entry in pl["childOrder"]:
+                    if str(pl_entry).endswith("-ulgroup"):
+                        group_title = rename_group(root, pl_entry, num)
+                        if group_title != "":
+                            num += 1
 
 
 def include_make_markdown_script(archive_path):
