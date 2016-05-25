@@ -1,10 +1,13 @@
 # python3.3
 # ul_snapshot.py
-# version-1.3.2 2016-02-21 at 14:12 -  EST
+# version-1.3.3 2016-05-24 at 09:04 -  EST
+
 
 # GNU (cl) 2016 @rovest, free to use and improve. Not for sale.
 # Only tested with python 3.3 on OS X 10.10
 
+# Update 2016-05-22: process_ul_sheets_and_groups(): Fixed over-simplification from 2016-02-27
+#                                                    (sheets got wrong sequence numbering)
 # Update 2016-02-27: process_ul_sheets_and_groups(): Fixed and simplified processing sheets
 # Update 2016-02-21: make_ul_archive():
 #                    Hard-coded access to Groups-ulgroup and Unfiled-ulgroup (Inbox) only.
@@ -118,16 +121,26 @@ def make_ul_archive(ul_library_path, archive_path):
 def process_ul_sheets_and_groups(path):
     for root, dirnames, filenames in os.walk(path, topdown=False):
         # Processing Sheets
-        num = 1
-        for dirname in fnmatch.filter(dirnames, '*.ulysses'):
-            new_title = rename_sheet(root, dirname, num)
-            if new_title != "":
-                num += 1
+        # num = 1
+        # for dirname in fnmatch.filter(dirnames, '*.ulysses'):
+        #     new_title = rename_sheet(root, dirname, num)
+        #     if new_title != "":
+        #         num += 1
 
         # Processing Groups
         for filename in fnmatch.filter(filenames, 'Info.ulgroup'):
             info_file = os.path.join(root, filename)
             pl = plistlib.readPlist(info_file)
+            # pl_res_data = pl["resolutionData"]
+            if "sheetClusters" in pl:
+                num = 1
+                for pl_entry0 in pl["sheetClusters"]:
+                    for pl_entry in pl_entry0:
+                            if str(pl_entry).endswith(".ulysses"):
+                                new_title = rename_sheet(root, pl_entry, num)
+                                if new_title != "":
+                                    num += 1
+                    # continue
             if "childOrder" in pl:
                 num = 1
                 for pl_entry in pl["childOrder"]:
@@ -154,6 +167,10 @@ def rename_sheet(root, ul_name, num):
         new_title = str(num).zfill(2) + " - " + clean_title(title) + ".ulysses"
         new_file = os.path.join(root, new_title)
         os.rename(ul_file, new_file)
+        # print(ul_name)
+        # print(new_title)
+        # print()
+
         return new_title.strip()
     except:
         print("*** File Missing or Corrupt XML", xml_file)
