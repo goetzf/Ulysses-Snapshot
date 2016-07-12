@@ -1,10 +1,16 @@
 # python3.3
 # ul_snapshot.py
-# version-1.3.1 - 2015-07-03 at 12:25 EST
+# version-1.3.3 2016-05-24 at 09:04 -  EST
 
-# GNU (cl) 2015 @RoyRogers56, free to use and improve. Not for sale.
+# GNU (cl) 2016 @rovest, free to use and improve. Not for sale.
 # Only tested with python 3.3 on OS X 10.10
 
+# Update 2016-05-22: process_ul_sheets_and_groups(): Fixed over-simplification from 2016-02-27
+#                                                    (sheets got wrong sequence numbering)
+# Update 2016-02-27: process_ul_sheets_and_groups(): Fixed and simplified processing sheets
+# Update 2016-02-21: make_ul_archive():
+#                    Hard-coded access to Groups-ulgroup and Unfiled-ulgroup (Inbox) only.
+#                    Inbox and all top level groups will now be on same level.
 # Update 2015-07-03: 1. Added workaround for bug in Ulysses 2.1 restore backup function.
 #                    2. Removed backup sections (Ulysses 2.1 now has native backup solution).
 #                    3. Reorganized order of functions to make the script easier to read.
@@ -47,27 +53,18 @@ do_embed_markdown = True
 HOME = os.getenv("HOME", "") + "/"
 time_stamp = "_" + datetime.datetime.now().strftime("%Y-%m-%d_%H%M")
 
+# Note!!! DO NOT LEAVE ANY OF THE PATH NAMES BELOW EMPTY OR TO ROOT OF EXISTING FOLDERS!!!
+# Note!!! YOU MAY THEN DELETE ALL YOUR USER FILES !!!
+
 # Path for Ulysses Archive (Snapshots):
 archive_ul_path = HOME + "Archive_Ulysses/UL_Archive" + time_stamp
 # Path for Ulysses Markdown Archive:
 archive_markdown_path = HOME + "Archive_Ulysses/UL_Markdown"  # + time_stamp
 
 archive_ul_temp = HOME + "Archive_Ulysses/Temp_UL_Archive"
+
+# Note!!! Do not change last part of folder name: "Temp_UL_Markdown"!!!
 markdown_ul_temp = HOME + "Archive_Ulysses/Temp_UL_Markdown"
-
-
-def fix_ulysses_info_ulgroup(ulysses_path_lib, archive_path):
-    # workaround for bug in Ulysses 2.1's new restore backup function:
-    if "X5AZV975AG~com~soulmen~ulysses3" not in ulysses_path_lib:
-        return
-    info_file = os.path.join(archive_path, "Groups-ulgroup/Info.ulgroup")
-    pl = plistlib.readPlist(info_file)
-    if "displayName" in pl:
-        display_name = pl["displayName"]
-        if display_name != "iCloud":
-            pl["displayName"] = "iCloud"
-            plistlib.writePlist(pl, info_file)
-            print("Wrong displayName: '" + display_name + "' changed to correct value: 'iCloud'")
 
 
 def main():
@@ -107,14 +104,96 @@ def main():
 
 def make_ul_archive(ul_library_path, archive_path):
     # Copy library:
-    if not os.path.exists(archive_path):
-        os.makedirs(archive_path)
-    subprocess.call(['rsync', '-t', '-r', '--delete', '--exclude=Trash-ultrash/',
-                    ul_library_path, archive_path])
+    sub_paths = (('Groups-ulgroup', ''), ('Unfiled-ulgroup', '00 - Inbox'))
+    for from_sub, to_sub in sub_paths:
+        from_path = os.path.join(ul_library_path, from_sub) + '/'
+        to_path = os.path.join(archive_path, to_sub)
+        if not os.path.exists(to_path):
+            os.makedirs(to_path)
+        subprocess.call(['rsync', '-t', '-r', '--delete',
+                        from_path, to_path])
     # Rename Sheets and Groups:
-    fix_ulysses_info_ulgroup(ul_library_path, archive_path)
     process_ul_sheets_and_groups(archive_path)
     include_make_markdown_script(archive_path)
+
+
+def process_ul_sheets_and_groups(path):
+    for root, dirnames, filenames in os.walk(path, topdown=False):
+        # Processing Sheets
+        # num = 1
+        # for dirname in fnmatch.filter(dirnames, '*.ulysses'):
+        #     new_title = rename_sheet(root, dirname, num)
+        #     if new_title != "":
+        #         num += 1
+
+        # Processing Groups
+        for filename in fnmatch.filter(filenames, 'Info.ulgroup'):
+            info_file = os.path.join(root, filename)
+            pl = plistlib.readPlist(info_file)
+            # pl_res_data = pl["resolutionData"]
+            if "sheetClusters" in pl:
+                num = 1
+                for pl_entry0 in pl["sheetClusters"]:
+                    for pl_entry in pl_entry0:
+                            if str(pl_entry).endswith(".ulysses"):
+                                new_title = rename_sheet(root, pl_entry, num)
+                                if new_title != "":
+                                    num += 1
+                    # continue
+            if "childOrder" in pl:
+                num = 1
+                for pl_entry in pl["childOrder"]:
+                    if str(pl_entry).endswith("-ulgroup"):
+                        group_title = rename_group(root, pl_entry, num)
+                        if group_title != "":
+                            num += 1
+
+
+def rename_sheet(root, ul_name, num):
+    xml_file = os.path.join(root, ul_name, "Content.xml")
+    ul_file = os.path.join(root, ul_name)
+    if not os.path.exists(ul_file):
+        # print("*** File Missing:", ul_file)
+        return ""
+
+    try:
+        xml_doc = ET.parse(xml_file)
+        p = xml_doc.find(".//p")
+        if p is not None:
+            title = ET.tostring(p, "unicode", "text")
+        else:
+            title = "Untitled"
+        new_title = str(num).zfill(2) + " - " + clean_title(title) + ".ulysses"
+        new_file = os.path.join(root, new_title)
+        os.rename(ul_file, new_file)
+        # print(ul_name)
+        # print(new_title)
+        # print()
+
+        return new_title.strip()
+    except:
+        print("*** File Missing or Corrupt XML", xml_file)
+        return "*** Corrupt XML"
+
+
+def rename_group(root, group, num):
+    info_file = os.path.join(root, group, "Info.ulgroup")
+    group_path = os.path.join(root, group)
+    if not os.path.exists(info_file):
+        # print("*** Group Missing:", info_file)
+        return ""
+
+    pl = plistlib.readPlist(info_file)
+
+    if "displayName" in pl:
+        group_title = pl["displayName"]
+    else:
+        group_title = "Untitled"
+
+    if group_path.endswith("-ulgroup"):
+        group_title = str(num).zfill(2) + " - " + group_title
+        os.rename(group_path, group_path[:-40] + group_title)
+    return group_title
 
 
 def read_file(file_name):
@@ -143,82 +222,6 @@ def clean_title(title):
     if title == "":
         title = "Untitled"
     return title[:64]
-
-
-def rename_sheet(root, ul_name, num):
-    xml_file = os.path.join(root, ul_name, "Content.xml")
-    ul_file = os.path.join(root, ul_name)
-    if not os.path.exists(ul_file):
-        print("*** File Missing:", ul_file)
-        return "*** File Missing"
-    else:
-        try:
-            xml_doc = ET.parse(xml_file)
-            p = xml_doc.find(".//p")
-            if p is not None:
-                title = ET.tostring(p, "unicode", "text")
-            else:
-                title = "Untitled"
-            new_title = str(num).zfill(2) + " - " + clean_title(title) + ".ulysses"
-            new_file = os.path.join(root, new_title)
-            os.rename(ul_file, new_file)
-            return new_title.strip()
-        except:
-            print("*** File Missing or Corrupt XML", xml_file)
-            return "*** Corrupt XML"
-
-
-def rename_group(root, group, num):
-    info_file = os.path.join(root, group, "Info.ulgroup")
-    group_path = os.path.join(root, group)
-    pl = plistlib.readPlist(info_file)
-
-    if "displayName" in pl:
-        group_title = pl["displayName"]
-    else:
-        group_title = "Untitled"
-
-    if group_path.endswith("Groups-ulgroup"):
-        os.rename(group_path, group_path[:-14] + group_title)
-    elif group_path.endswith("Unfiled-ulgroup"):
-        group_title = "Inbox"
-        os.rename(group_path, group_path[:-15] + group_title)
-    elif group_path.endswith("-ulgroup"):
-        group_title = str(num).zfill(2) + " - " + group_title
-        os.rename(group_path, group_path[:-40] + group_title)
-    return group_title
-
-
-def process_ul_sheets_and_groups(path):
-    for root, dirnames, filenames in os.walk(path, topdown=False):
-        for filename in fnmatch.filter(filenames, 'Info.ulgroup'):
-            info_file = os.path.join(root, filename)
-            pl = plistlib.readPlist(info_file)
-            ts = os.path.getmtime(info_file)
-            if "sheetClusters" in pl:
-                pl["namedSheetClusters"] = []
-                num = 1
-                index = 0
-                for pl_entry in pl["sheetClusters"]:
-                    pl["namedSheetClusters"].append([])
-                    for entry in pl_entry:
-                        new_title = rename_sheet(root, entry, num)
-                        num += 1
-                        pl["namedSheetClusters"][index].append(new_title)
-                    index += 1
-                plistlib.writePlist(pl, info_file)
-                os.utime(info_file, (-1, ts))
-
-            if "childOrder" in pl:
-                pl["namedChildOrder"] = []
-                num = 1
-                for pl_entry in pl["childOrder"]:
-                    if str(pl_entry).endswith("-ulgroup"):
-                        group_title = rename_group(root, pl_entry, num)
-                        num += 1
-                        pl["namedChildOrder"].append(group_title)
-                plistlib.writePlist(pl, info_file)
-                os.utime(info_file, (-1, ts))
 
 
 def include_make_markdown_script(archive_path):
@@ -288,8 +291,8 @@ def make_markdown(ul_archive_path, md_path):
     temp_xslt = "ul2md_tmp.xslt"
     write_file(temp_xslt, ulysse2markdown_xslt)
     subprocess.call(['find', ul_archive_path, '-iname', "*.ulysses", '-exec', 'sh', '-c',
-                    'xsltproc ul2md_tmp.xslt "$0/Content.xml" > "$0.md"',
-                    '{}', ';'])
+                     'xsltproc ul2md_tmp.xslt "$0/Content.xml" > "$0.md"',
+                     '{}', ';'])
     os.remove(temp_xslt)
 
     # Rename all *.ulysses.md files to *.md:
@@ -305,6 +308,7 @@ def make_markdown(ul_archive_path, md_path):
         # *** shutil.rmtree() may delete all user files or your complete Hard Drive!!
         shutil.rmtree(markdown_ul_temp)
         # *** NOTE: USE rmtree() WITH EXTREME CAUTION!
+
     os.makedirs(markdown_ul_temp)
     subprocess.call(['rsync', '-r', '-t', '--include=*.md', '--exclude=*.*',
                      '--exclude=*-ulfilter/', '--remove-source-files',

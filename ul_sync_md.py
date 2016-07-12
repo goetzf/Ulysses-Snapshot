@@ -1,14 +1,15 @@
 # python3.3
 # ul_sync_md.py
 
-# version-1.0.1 - 2015-01-09 at 20:43 IST
+# version-1.1.1 - 2016-02-22 at 20:33 EST
 # GNU (cl) 2015 @RoyRogers56, free to use and improve. Not for sale.
-# Only tested with python 3.3 on OS X 10.10
+# Only tested with python 3.3 on OS X 10.10 and 10.11
 
 # First checking for Changes in Markdown files (exported from Ulysses)
-# and copying changed files to Markdorn_sync_Inbox (folder in External sources in Ulysses)
+#     copying any changed files to Markdorn_sync_Inbox (folder in External sources in Ulysses)
 # Then checking for changes in Ulysses sheets and groups,
-# and exporting Markdown from Ulysses if Changes.
+#     and exporting Markdown from Ulysses if any changes.
+# Uses rsync for copying, so only markdown files of changed sheets will be updated.
 
 import os
 import fnmatch
@@ -18,21 +19,34 @@ import subprocess
 
 HOME = os.getenv("HOME", "") + "/"
 
-#markdown_path = HOME + "Archive_Ulysses/UL_Markdown"
-markdown_path = HOME + "OneDrive/UL_Markdown"
-sync_inbox_path = HOME + "OneDrive/md_sync_inbox"
+# Note!!! DO NOT LEAVE ANY OF THE PATH NAMES BELOW EMPTY OR TO ROOT OF EXISTING FOLDERS!!!
+# Note!!! YOU MAY THEN DELETE ALL YOUR USER FILES !!!
 
-ulysses_path = HOME + "Library/Mobile Documents/X5AZV975AG~com~soulmen~ulysses3/"\
-    + "Documents/Library/"
+# md_icloud_path = HOME + "OneDrive/UL iCloud Markdown"
+# sync_inbox_path = HOME + "OneDrive/md_sync_inbox"
+sync_inbox_path = HOME + "Dropbox/My Notes/md_sync_inbox"
+
+md_icloud_path = HOME + "Dropbox/My Notes/UL iCloud Markdown"
+md_mac_path = HOME + "Dropbox/My Notes/UL Mac Markdown"
+
+ul_icloud_path = HOME + "Library/Mobile Documents/X5AZV975AG~com~soulmen~ulysses3/"\
+                      + "Documents/Library/"
+ul_mac_path = HOME + "Library/Containers/com.soulmen.ulysses3/Data/"\
+                   + "Documents/Library/"
 
 
 def main():
-    if check_for_md_updates(markdown_path, sync_inbox_path):
-        notify("Files imported to 'md_sync_inbox'")
-    if check_for_ulysses_updates(ulysses_path, markdown_path):
-        import ul_snapshot
-        ul_snapshot.make_markdown_export(ulysses_path, markdown_path)
-        notify('Exported Markdown from Ulysses')
+    sync_paths = ((ul_icloud_path, md_icloud_path), (ul_mac_path, md_mac_path))
+    lib_imported = False
+    for ul_path, md_path in sync_paths:
+        if check_for_md_updates(md_path, sync_inbox_path):
+            notify("Files imported to 'md_sync_inbox'")
+        if check_for_ul_updates(ul_path, md_path):
+            if not lib_imported:
+                import ul_snapshot
+                lib_imported = True
+            ul_snapshot.make_markdown_export(ul_path, md_path)
+            notify('Exported Markdown from Ulysses')
 
 
 def read_file(file_name):
@@ -97,7 +111,7 @@ def check_for_md_updates(md_path, sync_inbox):
     return files_found
 
 
-def check_for_ulysses_updates(ul_path, md_ts_path):
+def check_for_ul_updates(ul_path, md_ts_path):
     ts_file = os.path.join(md_ts_path, ".export-time.txt")
     if not os.path.exists(ts_file):
         return True
