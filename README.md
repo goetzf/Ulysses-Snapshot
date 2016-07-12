@@ -1,6 +1,8 @@
 
 # Ulysses Markdown export – ul_snapshot.py
 
+### Developed by [rovest](https://github.com/rovest/ulysses_snapshot).
+
 * This Python script takes a snapshot of all Ulysses' sheets and groups, 
 * to a readable folder structure, named with Group and Sheet titles. 
 * Groups and Sheets are prefixed with sequence numbers. 
