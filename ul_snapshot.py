@@ -129,7 +129,8 @@ def process_ul_sheets_and_groups(path):
         # Processing Groups
         for filename in fnmatch.filter(filenames, 'Info.ulgroup'):
             info_file = os.path.join(root, filename)
-            pl = plistlib.readPlist(info_file)
+            with open(info_file, 'rb') as infile:
+                pl = plistlib.load(infile)
             # pl_res_data = pl["resolutionData"]
             if "sheetClusters" in pl:
                 num = 1
@@ -182,8 +183,9 @@ def rename_group(root, group, num):
     if not os.path.exists(info_file):
         # print("*** Group Missing:", info_file)
         return ""
-
-    pl = plistlib.readPlist(info_file)
+    
+    with open(info_file, 'rb') as infile:
+        pl = plistlib.load(infile)
 
     if "displayName" in pl:
         group_title = pl["displayName"]
