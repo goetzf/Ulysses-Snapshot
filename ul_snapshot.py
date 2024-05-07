@@ -314,8 +314,8 @@ def make_markdown(ul_archive_path, md_path):
         # *** NOTE: USE rmtree() WITH EXTREME CAUTION!
 
     os.makedirs(markdown_ul_temp)
-    subprocess.call(['rsync', '-r', '-t', '--include=*.md', '--exclude=*.*',
-                     '--exclude=*-ulfilter/', '--remove-source-files',
+    subprocess.call(['rsync', '-r', '-t', '--include=*.md', '--exclude=*.ulysses', '--exclude=*.ulgroup',
+                     '--exclude=*-ulfilter/', '--exclude=.DS_Store' '--remove-source-files',
                      ul_archive_path + "/", markdown_ul_temp])
 
     # Copy all mediafiles and change UUID-link in .md-file to full filename:
