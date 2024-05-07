@@ -191,7 +191,9 @@ def rename_group(root, group, num):
         group_title = pl["displayName"]
     else:
         group_title = "Untitled"
-
+    
+    group_title = re.sub(r'[\/\?\*]', '-', group_title)
+    
     if group_path.endswith("-ulgroup"):
         group_title = str(num).zfill(2) + " - " + group_title
         os.rename(group_path, group_path[:-40] + group_title)
